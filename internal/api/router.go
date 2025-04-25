@@ -15,6 +15,7 @@ func NewRouter(cfg *Config) http.Handler {
 	mux.HandleFunc("POST /api/users", cfg.handlerCreateUser)
 	mux.HandleFunc("GET /api/users", cfg.handlerGetUsers)
 	mux.HandleFunc("GET /api/users/{userId}", cfg.handlerGetUser)
+	mux.HandleFunc("PUT /api/users/{userId}", cfg.handlerUpdateUser)
 	mux.HandleFunc("DELETE /api/users", cfg.handlerDeleteAllUsers)
 
 	mux.HandleFunc("POST /api/login", cfg.handlerLogin)

@@ -98,6 +98,63 @@ func (cfg *Config) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, user)
 }
 
+func (cfg *Config) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	userId := r.PathValue("userId")
+
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't get bearer token", err)
+		return
+	}
+
+	authedUserID, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT", err)
+		return
+	}
+
+	if authedUserID != uuid.MustParse(userId) {
+		respondWithError(w, http.StatusForbidden, "Forbidden", nil)
+		return
+	}
+
+	user, err := cfg.db.GetUserById(r.Context(), uuid.MustParse(userId))
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "User not found", err)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+
+	if err := decoder.Decode(&params); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
+		return
+	}
+
+	pswdHash, err := auth.HashPassword(params.Password)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't hash password", err)
+		return
+	}
+
+	err = cfg.db.UpdateUser(r.Context(), database.UpdateUserParams{
+		ID:           user.ID,
+		Email:        params.Email,
+		PasswordHash: pswdHash,
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't update user", err)
+		return
+	}
+	respondWithJSON(w, http.StatusNoContent, nil)
+}
+
 func (cfg *Config) handlerDeleteAllUsers(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv("PLATFORM") != "dev" {
 		respondWithError(w, http.StatusMethodNotAllowed, "Not allowed", nil)
