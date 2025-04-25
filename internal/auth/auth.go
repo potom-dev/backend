@@ -21,10 +21,15 @@ func CheckPassword(password, hashedPassword string) error {
 }
 
 func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
+	expiresAt := time.Now().Add(expiresIn)
+	if expiresIn == 0 {
+		expiresAt = time.Now().Add(time.Hour * 24 * 365)
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    "potom",
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiresIn)),
+		ExpiresAt: jwt.NewNumericDate(expiresAt),
 		Subject:   userID.String(),
 	})
 

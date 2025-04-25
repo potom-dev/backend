@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/potom-dev/backend/internal/auth"
+	"github.com/potom-dev/backend/internal/database"
 )
 
 func (cfg *apiConfig) handlerCreateGroup(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +29,22 @@ func (cfg *apiConfig) handlerCreateGroup(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	group, err := cfg.db.CreateGroup(r.Context(), params.Name)
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't get bearer token", err)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT", err)
+		return
+	}
+
+	group, err := cfg.db.CreateGroup(r.Context(), database.CreateGroupParams{
+		Name:     params.Name,
+		AuthorID: userID,
+	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create group", err)
 		return

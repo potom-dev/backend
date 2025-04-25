@@ -15,6 +15,7 @@ type Group struct {
 	Name      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	AuthorID  uuid.UUID
 }
 
 type User struct {

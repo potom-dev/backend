@@ -7,27 +7,36 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createGroup = `-- name: CreateGroup :one
-INSERT INTO groups (id, created_at, updated_at, name)
+INSERT INTO groups (id, created_at, updated_at, name, author_id)
 VALUES (
     gen_random_uuid(),
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP,
-    $1
+    $1,
+    $2
 )
-RETURNING id, name, created_at, updated_at
+RETURNING id, name, created_at, updated_at, author_id
 `
 
-func (q *Queries) CreateGroup(ctx context.Context, name string) (Group, error) {
-	row := q.db.QueryRowContext(ctx, createGroup, name)
+type CreateGroupParams struct {
+	Name     string
+	AuthorID uuid.UUID
+}
+
+func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error) {
+	row := q.db.QueryRowContext(ctx, createGroup, arg.Name, arg.AuthorID)
 	var i Group
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AuthorID,
 	)
 	return i, err
 }
