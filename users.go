@@ -49,6 +49,16 @@ func (cfg *apiConfig) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, users)
 }
 
+func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
+	userId := r.PathValue("userId")
+	user, err := cfg.db.GetUser(r.Context(), uuid.MustParse(userId))
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't get user", err)
+		return
+	}
+	respondWithJSON(w, http.StatusOK, user)
+}
+
 func (cfg *apiConfig) handlerDeleteAllUsers(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv("PLATFORM") != "dev" {
 		respondWithError(w, http.StatusMethodNotAllowed, "Not allowed", nil)

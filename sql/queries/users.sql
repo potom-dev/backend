@@ -12,5 +12,9 @@ RETURNING *;
 SELECT * FROM users
 ORDER BY created_at ASC;
 
+-- name: GetUser :one
+SELECT * FROM users
+WHERE id = $1;
+
 -- name: DeleteAllUsers :exec
 DELETE FROM users;
