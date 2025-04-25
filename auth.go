@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/potom-dev/backend/internal/auth"
@@ -10,12 +11,14 @@ import (
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email        string `json:"email"`
+		Password     string `json:"password"`
+		ExpiresInSec int64  `json:"expires_in_seconds,omitempty"`
 	}
 	type response struct {
 		Id    uuid.UUID `json:"id"`
 		Email string    `json:"email"`
+		Token string    `json:"token"`
 	}
 
 	var params parameters
@@ -37,8 +40,15 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret, time.Duration(params.ExpiresInSec)*time.Second)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create JWT", err)
+		return
+	}
+
 	respondWithJSON(w, http.StatusOK, response{
 		Id:    user.ID,
 		Email: user.Email,
+		Token: token,
 	})
 }
