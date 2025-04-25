@@ -12,20 +12,31 @@ import (
 	"github.com/potom-dev/backend/internal/database"
 )
 
-func (cfg *Config) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-	type response struct {
-		Id        uuid.UUID `json:"id"`
-		Email     string    `json:"email"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-	}
+type CreateUpdateUserParams struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
 
+type User struct {
+	Id        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// handlerCreateUser godoc
+//
+//	@Router		/users [post]
+//	@Summary	create a user
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Param		body	body		CreateUpdateUserParams	true	"User creation parameters"
+//	@Success	201		{object}	User
+//	@Failure	500		{object}	ErrorResponse
+func (cfg *Config) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := CreateUpdateUserParams{}
 
 	if err := decoder.Decode(&params); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
@@ -49,7 +60,7 @@ func (cfg *Config) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, response{
+	respondWithJSON(w, http.StatusCreated, User{
 		Id:        user.ID,
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
@@ -57,22 +68,15 @@ func (cfg *Config) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-type User struct {
-	ID        uuid.UUID `json:"id"`
-	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
 // handlerGetUsers godoc
-// @Summary      Get users
-// @Description  Get all users
-// @Tags         users
-// @Accept       json
-// @Produce      json
-// @Success      200  {array}   User[]
-// @Failure      500  {object}  ErrorResponse
-// @Router       /users [get]
+//
+//	@Router		/users [get]
+//	@Summary	get all users
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Success	200	{array}		User
+//	@Failure	500	{object}	ErrorResponse
 func (cfg *Config) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := cfg.db.GetUsers(r.Context())
 	if err != nil {
@@ -84,7 +88,7 @@ func (cfg *Config) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 
 	for _, user := range users {
 		usersResponse = append(usersResponse, User{
-			ID:        user.ID,
+			Id:        user.ID,
 			Email:     user.Email,
 			CreatedAt: user.CreatedAt,
 			UpdatedAt: user.UpdatedAt,
@@ -94,6 +98,16 @@ func (cfg *Config) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, usersResponse)
 }
 
+// handlerGetUser godoc
+//
+//	@Router		/users/{userId} [get]
+//	@Summary	get user by id
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Param		userId	path		string	true	"User ID"
+//	@Success	200		{object}	User
+//	@Failure	500		{object}	ErrorResponse
 func (cfg *Config) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	userId := r.PathValue("userId")
 	user, err := cfg.db.GetUserById(r.Context(), uuid.MustParse(userId))
@@ -104,12 +118,22 @@ func (cfg *Config) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, user)
 }
 
+// handlerUpdateUser godoc
+//
+//	@Router		/users/{userId} [put]
+//	@Summary	update user
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Param		userId	path	string				true	"User ID"
+//	@Param		body	body	CreateUpdateUserParams	true	"User update data"
+//	@Success	204		"No Content"
+//	@Failure	401		{object}	ErrorResponse
+//	@Failure	403		{object}	ErrorResponse
+//	@Failure	404		{object}	ErrorResponse
+//	@Failure	500		{object}	ErrorResponse
+//	@Security	BearerAuth
 func (cfg *Config) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-
 	userId := r.PathValue("userId")
 
 	token, err := auth.GetBearerToken(r.Header)
@@ -136,7 +160,7 @@ func (cfg *Config) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := CreateUpdateUserParams{}
 
 	if err := decoder.Decode(&params); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
@@ -161,6 +185,16 @@ func (cfg *Config) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusNoContent, nil)
 }
 
+// handlerDeleteAllUsers godoc
+//
+//	@Router		/users [delete]
+//	@Summary	delete all users
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Success	200	{string}	string
+//	@Failure	405	{object}	ErrorResponse
+//	@Failure	500	{object}	ErrorResponse
 func (cfg *Config) handlerDeleteAllUsers(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv("PLATFORM") != "dev" {
 		respondWithError(w, http.StatusMethodNotAllowed, "Not allowed", nil)

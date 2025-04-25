@@ -6,18 +6,18 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-// @title           potom swagger api
-// @version         1.0
-// @description     potom api.
-// @termsOfService  http://swagger.io/terms/
+//	@title			potom swagger api
+//	@version		1.0
+//	@description	potom api.
+//	@termsOfService	http://swagger.io/terms/
 
-// @host      localhost:8080
-// @BasePath  /api
+//	@host		localhost:8080
+//	@BasePath	/api
 
-// @securityDefinitions.basic  BasicAuth
+//	@securityDefinitions.basic	BasicAuth
 
-// @externalDocs.description  OpenAPI
-// @externalDocs.url          https://swagger.io/resources/open-api/
+//	@externalDocs.description	OpenAPI
+//	@externalDocs.url			https://swagger.io/resources/open-api/
 func NewRouter(cfg *Config) http.Handler {
 	mux := http.NewServeMux()
 
