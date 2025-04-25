@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 	"github.com/potom-dev/backend/internal/database"
 )
 
-func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
+func (cfg *Config) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Email        string `json:"email"`
 		Password     string `json:"password"`
@@ -72,7 +72,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
+func (cfg *Config) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 	type response struct {
 		Token string `json:"token"`
 	}
@@ -116,7 +116,7 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (cfg *apiConfig) handlerRevokeRefresh(w http.ResponseWriter, r *http.Request) {
+func (cfg *Config) handlerRevokeRefresh(w http.ResponseWriter, r *http.Request) {
 	refresh, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't get bearer token", err)

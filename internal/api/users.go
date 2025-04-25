@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 	"github.com/potom-dev/backend/internal/database"
 )
 
-func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *Config) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -57,7 +57,7 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-func (cfg *apiConfig) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
+func (cfg *Config) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := cfg.db.GetUsers(r.Context())
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't get users", err)
@@ -88,7 +88,7 @@ func (cfg *apiConfig) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, usersResponse)
 }
 
-func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *Config) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	userId := r.PathValue("userId")
 	user, err := cfg.db.GetUserById(r.Context(), uuid.MustParse(userId))
 	if err != nil {
@@ -98,7 +98,7 @@ func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, user)
 }
 
-func (cfg *apiConfig) handlerDeleteAllUsers(w http.ResponseWriter, r *http.Request) {
+func (cfg *Config) handlerDeleteAllUsers(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv("PLATFORM") != "dev" {
 		respondWithError(w, http.StatusMethodNotAllowed, "Not allowed", nil)
 		return

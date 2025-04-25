@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 	"github.com/potom-dev/backend/internal/database"
 )
 
-func (cfg *apiConfig) handlerCreateGroup(w http.ResponseWriter, r *http.Request) {
+func (cfg *Config) handlerCreateGroup(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Name string `json:"name"`
 	}
