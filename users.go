@@ -40,6 +40,15 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+func (cfg *apiConfig) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := cfg.db.GetUsers(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't get users", err)
+		return
+	}
+	respondWithJSON(w, http.StatusOK, users)
+}
+
 func (cfg *apiConfig) handlerDeleteAllUsers(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv("PLATFORM") != "dev" {
 		respondWithError(w, http.StatusMethodNotAllowed, "Not allowed", nil)
