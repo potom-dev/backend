@@ -23,12 +23,6 @@ paths:
       consumes:
       - application/json
       description: Get all users
-      parameters:
-      - description: Account ID
-        in: path
-        name: id
-        required: true
-        type: integer
       produces:
       - application/json
       responses:
@@ -38,14 +32,6 @@ paths:
             items:
               $ref: '#/definitions/api.User'
             type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:

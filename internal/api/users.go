@@ -64,16 +64,13 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// ShowAccount godoc
+// handlerGetUsers godoc
 // @Summary      Get users
 // @Description  Get all users
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        id   path      int  true  "Account ID"
 // @Success      200  {array}   User[]
-// @Failure      400  {object}  ErrorResponse
-// @Failure      404  {object}  ErrorResponse
 // @Failure      500  {object}  ErrorResponse
 // @Router       /users [get]
 func (cfg *Config) handlerGetUsers(w http.ResponseWriter, r *http.Request) {

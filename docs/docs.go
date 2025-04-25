@@ -28,15 +28,6 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Get users",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Account ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -45,18 +36,6 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/api.User"
                             }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
