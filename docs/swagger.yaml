@@ -1,4 +1,9 @@
 definitions:
+  api.CreateGroupParams:
+    properties:
+      name:
+        type: string
+    type: object
   api.CreateUpdateUserParams:
     properties:
       email:
@@ -9,6 +14,42 @@ definitions:
   api.ErrorResponse:
     properties:
       error:
+        type: string
+    type: object
+  api.Group:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  api.LoginParams:
+    properties:
+      email:
+        type: string
+      expires_in_seconds:
+        type: integer
+      password:
+        type: string
+    type: object
+  api.LoginResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      refresh_token:
+        type: string
+      token:
+        type: string
+    type: object
+  api.RefreshResponse:
+    properties:
+      token:
         type: string
     type: object
   api.User:
@@ -25,6 +66,138 @@ definitions:
 info:
   contact: {}
 paths:
+  /groups:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Group creation parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateGroupParams'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.Group'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: create a group
+      tags:
+      - groups
+  /login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/api.LoginParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.LoginResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: login user
+      tags:
+      - auth
+  /readiness:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: check if the service is ready
+      tags:
+      - health
+  /refresh:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: revoke refresh token
+      tags:
+      - auth
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.RefreshResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: refresh access token
+      tags:
+      - auth
   /users:
     delete:
       consumes:

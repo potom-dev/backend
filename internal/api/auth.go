@@ -10,20 +10,36 @@ import (
 	"github.com/potom-dev/backend/internal/database"
 )
 
-func (cfg *Config) handlerLogin(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Email        string `json:"email"`
-		Password     string `json:"password"`
-		ExpiresInSec int64  `json:"expires_in_seconds,omitempty"`
-	}
-	type response struct {
-		Id           uuid.UUID `json:"id"`
-		Email        string    `json:"email"`
-		Token        string    `json:"token"`
-		RefreshToken string    `json:"refresh_token"`
-	}
+type LoginParams struct {
+	Email        string `json:"email"`
+	Password     string `json:"password"`
+	ExpiresInSec int64  `json:"expires_in_seconds,omitempty"`
+}
 
-	var params parameters
+type LoginResponse struct {
+	Id           uuid.UUID `json:"id"`
+	Email        string    `json:"email"`
+	Token        string    `json:"token"`
+	RefreshToken string    `json:"refresh_token"`
+}
+
+type RefreshResponse struct {
+	Token string `json:"token"`
+}
+
+// handlerLogin godoc
+//
+//	@Router		/login [post]
+//	@Summary	login user
+//	@Tags		auth
+//	@Accept		json
+//	@Produce	json
+//	@Param		body	body		LoginParams	true	"Login parameters"
+//	@Success	200		{object}	LoginResponse
+//	@Failure	401		{object}	ErrorResponse
+//	@Failure	500		{object}	ErrorResponse
+func (cfg *Config) handlerLogin(w http.ResponseWriter, r *http.Request) {
+	var params LoginParams
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
@@ -64,7 +80,7 @@ func (cfg *Config) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, response{
+	respondWithJSON(w, http.StatusOK, LoginResponse{
 		Id:           user.ID,
 		Email:        user.Email,
 		Token:        token,
@@ -72,11 +88,18 @@ func (cfg *Config) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// handlerRefresh godoc
+//
+//	@Router		/refresh [post]
+//	@Summary	refresh access token
+//	@Tags		auth
+//	@Accept		json
+//	@Produce	json
+//	@Param		Authorization	header	string	true	"Bearer token"
+//	@Success	200		{object}	RefreshResponse
+//	@Failure	401		{object}	ErrorResponse
+//	@Failure	500		{object}	ErrorResponse
 func (cfg *Config) handlerRefresh(w http.ResponseWriter, r *http.Request) {
-	type response struct {
-		Token string `json:"token"`
-	}
-
 	refresh, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't get bearer token", err)
@@ -111,11 +134,22 @@ func (cfg *Config) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, response{
+	respondWithJSON(w, http.StatusOK, RefreshResponse{
 		Token: token,
 	})
 }
 
+// handlerRevokeRefresh godoc
+//
+//	@Router		/refresh [delete]
+//	@Summary	revoke refresh token
+//	@Tags		auth
+//	@Accept		json
+//	@Produce	json
+//	@Param		Authorization	header	string	true	"Bearer token"
+//	@Success	204		"No Content"
+//	@Failure	401		{object}	ErrorResponse
+//	@Failure	500		{object}	ErrorResponse
 func (cfg *Config) handlerRevokeRefresh(w http.ResponseWriter, r *http.Request) {
 	refresh, err := auth.GetBearerToken(r.Header)
 	if err != nil {

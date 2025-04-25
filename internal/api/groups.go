@@ -10,19 +10,33 @@ import (
 	"github.com/potom-dev/backend/internal/database"
 )
 
-func (cfg *Config) handlerCreateGroup(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Name string `json:"name"`
-	}
-	type response struct {
-		Id        uuid.UUID `json:"id"`
-		Name      string    `json:"name"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-	}
+type CreateGroupParams struct {
+	Name string `json:"name"`
+}
 
+type Group struct {
+	Id        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// handlerCreateGroup godoc
+//
+//	@Router		/groups [post]
+//	@Summary	create a group
+//	@Tags		groups
+//	@Accept		json
+//	@Produce	json
+//	@Param		Authorization	header	string	true	"Bearer token"
+//	@Param		body	body		CreateGroupParams	true	"Group creation parameters"
+//	@Success	201		{object}	Group
+//	@Failure	401		{object}	ErrorResponse
+//	@Failure	500		{object}	ErrorResponse
+//	@Security	BearerAuth
+func (cfg *Config) handlerCreateGroup(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := CreateGroupParams{}
 
 	if err := decoder.Decode(&params); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
@@ -50,7 +64,7 @@ func (cfg *Config) handlerCreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, response{
+	respondWithJSON(w, http.StatusCreated, Group{
 		Id:        group.ID,
 		Name:      group.Name,
 		CreatedAt: group.CreatedAt,
