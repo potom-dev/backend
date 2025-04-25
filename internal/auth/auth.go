@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"net/http"
 	"strings"
@@ -20,11 +22,8 @@ func CheckPassword(password, hashedPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
-func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
-	expiresAt := time.Now().Add(expiresIn)
-	if expiresIn == 0 {
-		expiresAt = time.Now().Add(time.Hour * 24 * 365)
-	}
+func MakeJWT(userID uuid.UUID, tokenSecret string) (string, error) {
+	expiresAt := time.Now().Add(time.Minute * 15)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    "potom",
@@ -73,4 +72,14 @@ func GetBearerToken(headers http.Header) (string, error) {
 	}
 
 	return parts[1], nil
+}
+
+func MakeRefreshToken() (string, error) {
+	data := make([]byte, 32)
+	_, err := rand.Read(data)
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(data), nil
 }

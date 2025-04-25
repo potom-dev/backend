@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/potom-dev/backend/internal/auth"
+	"github.com/potom-dev/backend/internal/database"
 )
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
@@ -16,9 +17,10 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		ExpiresInSec int64  `json:"expires_in_seconds,omitempty"`
 	}
 	type response struct {
-		Id    uuid.UUID `json:"id"`
-		Email string    `json:"email"`
-		Token string    `json:"token"`
+		Id           uuid.UUID `json:"id"`
+		Email        string    `json:"email"`
+		Token        string    `json:"token"`
+		RefreshToken string    `json:"refresh_token"`
 	}
 
 	var params parameters
@@ -40,15 +42,92 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret, time.Duration(params.ExpiresInSec)*time.Second)
+	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create JWT", err)
+		return
+	}
+
+	refresh, err := auth.MakeRefreshToken()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create refresh token", err)
+		return
+	}
+
+	refreshToken, err := cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
+		Token:     refresh,
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(time.Hour * 24 * 60),
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create refresh token", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, response{
+		Id:           user.ID,
+		Email:        user.Email,
+		Token:        token,
+		RefreshToken: refreshToken.Token,
+	})
+}
+
+func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
+	type response struct {
+		Token string `json:"token"`
+	}
+
+	refresh, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't get bearer token", err)
+		return
+	}
+
+	refreshToken, err := cfg.db.GetRefreshToken(r.Context(), refresh)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Invalid refresh token", err)
+		return
+	}
+
+	if refreshToken.RevokedAt.Valid {
+		respondWithError(w, http.StatusUnauthorized, "Refresh token revoked", nil)
+		return
+	}
+
+	if refreshToken.ExpiresAt.Before(time.Now()) {
+		respondWithError(w, http.StatusUnauthorized, "Refresh token expired", nil)
+		return
+	}
+
+	user, err := cfg.db.GetUserById(r.Context(), refreshToken.UserID)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "User not found", err)
+		return
+	}
+
+	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create JWT", err)
 		return
 	}
 
 	respondWithJSON(w, http.StatusOK, response{
-		Id:    user.ID,
-		Email: user.Email,
 		Token: token,
 	})
+}
+
+func (cfg *apiConfig) handlerRevokeRefresh(w http.ResponseWriter, r *http.Request) {
+	refresh, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't get bearer token", err)
+		return
+	}
+
+	err = cfg.db.RevokeRefreshToken(r.Context(), refresh)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't revoke refresh token", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusNoContent, nil)
 }
