@@ -124,3 +124,4 @@ docker run --rm -p 8080:8080 \
 ```bash
 docker-compose up
 ```
+This will start the backend and postgres services, and automatically apply migrations using goose.

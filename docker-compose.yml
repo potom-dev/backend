@@ -12,6 +12,15 @@ services:
       - JWT_SECRET=your_jwt_secret
       - DB_URL=postgres://postgres:postgres@postgres:5432/potom?sslmode=disable
     depends_on:
+      - migrate
+
+  migrate:
+    image: golang:1.23
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: sh -c "go install github.com/pressly/goose/v3/cmd/goose@latest && goose -dir sql/schema postgres postgres://postgres:postgres@postgres:5432/potom?sslmode=disable up"
+    depends_on:
       - postgres
 
   postgres:
