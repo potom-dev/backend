@@ -2,16 +2,20 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/potom-dev/backend/internal/auth"
+	"github.com/potom-dev/backend/internal/database"
 )
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 	type response struct {
 		Id        uuid.UUID `json:"id"`
@@ -27,11 +31,24 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
 	}
-	user, err := cfg.db.CreateUser(r.Context(), params.Email)
+
+	pswdHash, err := auth.HashPassword(params.Password)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't hash password", err)
+		return
+	}
+
+	log.Printf("Hashed password: %s", pswdHash)
+
+	user, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
+		Email:        params.Email,
+		PasswordHash: pswdHash,
+	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create user", err)
 		return
 	}
+
 	respondWithJSON(w, http.StatusCreated, response{
 		Id:        user.ID,
 		Email:     user.Email,
@@ -46,12 +63,34 @@ func (cfg *apiConfig) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't get users", err)
 		return
 	}
-	respondWithJSON(w, http.StatusOK, users)
+
+	usersResponse := []struct {
+		ID        uuid.UUID `json:"id"`
+		Email     string    `json:"email"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+	}{}
+
+	for _, user := range users {
+		usersResponse = append(usersResponse, struct {
+			ID        uuid.UUID `json:"id"`
+			Email     string    `json:"email"`
+			CreatedAt time.Time `json:"created_at"`
+			UpdatedAt time.Time `json:"updated_at"`
+		}{
+			ID:        user.ID,
+			Email:     user.Email,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		})
+	}
+
+	respondWithJSON(w, http.StatusOK, usersResponse)
 }
 
 func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	userId := r.PathValue("userId")
-	user, err := cfg.db.GetUser(r.Context(), uuid.MustParse(userId))
+	user, err := cfg.db.GetUserById(r.Context(), uuid.MustParse(userId))
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't get user", err)
 		return
