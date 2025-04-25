@@ -100,3 +100,27 @@ go install github.com/go-swagger/go-swagger/cmd/swagger@latest
 ```bash
 swag init
 ```
+
+## docker
+
+### build
+
+```bash
+docker build -t potom-backend .
+```
+
+### run
+
+```bash
+docker run --rm -p 8080:8080 \
+  -e PORT=8080 \
+  -e JWT_SECRET=your_jwt_secret \
+  -e DB_URL=postgres://username:password@host:port/database \
+  potom-backend
+```
+
+### docker-compose
+
+```bash
+docker-compose up
+```
