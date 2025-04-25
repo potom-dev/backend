@@ -11,6 +11,7 @@ import (
 
 	// Import pq driver for its side effects only
 	_ "github.com/lib/pq"
+	_ "github.com/potom-dev/backend/docs"
 )
 
 func main() {

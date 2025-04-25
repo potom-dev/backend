@@ -90,3 +90,13 @@ psql potom
 go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 sqlc version
 ```
+
+## swagger
+
+```bash
+go install github.com/go-swagger/go-swagger/cmd/swagger@latest
+```
+
+```bash
+swag init
+```

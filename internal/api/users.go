@@ -57,6 +57,25 @@ func (cfg *Config) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+type User struct {
+	ID        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// ShowAccount godoc
+// @Summary      Get users
+// @Description  Get all users
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "Account ID"
+// @Success      200  {array}   User[]
+// @Failure      400  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /users [get]
 func (cfg *Config) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := cfg.db.GetUsers(r.Context())
 	if err != nil {
@@ -64,20 +83,10 @@ func (cfg *Config) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usersResponse := []struct {
-		ID        uuid.UUID `json:"id"`
-		Email     string    `json:"email"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-	}{}
+	usersResponse := []User{}
 
 	for _, user := range users {
-		usersResponse = append(usersResponse, struct {
-			ID        uuid.UUID `json:"id"`
-			Email     string    `json:"email"`
-			CreatedAt time.Time `json:"created_at"`
-			UpdatedAt time.Time `json:"updated_at"`
-		}{
+		usersResponse = append(usersResponse, User{
 			ID:        user.ID,
 			Email:     user.Email,
 			CreatedAt: user.CreatedAt,

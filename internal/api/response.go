@@ -6,6 +6,10 @@ import (
 	"net/http"
 )
 
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
 func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
 	if code > 499 {
 		log.Printf("Responding with %d error: %s", code, msg)
@@ -14,9 +18,7 @@ func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
 		log.Printf("Error: %v", err)
 	}
 
-	respondWithJSON(w, code, struct {
-		Error string `json:"error"`
-	}{
+	respondWithJSON(w, code, ErrorResponse{
 		Error: msg,
 	})
 }
