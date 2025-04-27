@@ -10,8 +10,27 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/gorilla/sessions"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/gothic"
+	"github.com/markbates/goth/providers/google"
+	"github.com/potom-dev/backend/internal/env"
 	"golang.org/x/crypto/bcrypt"
 )
+
+func NewAuth() {
+	googleClientID := env.GetEnv("GOOGLE_CLIENT_ID")
+	googleClientSecret := env.GetEnv("GOOGLE_CLIENT_SECRET")
+	googleRedirectURL := env.GetEnv("GOOGLE_REDIRECT_URL")
+	key := env.GetEnv("SESSION_KEY")
+
+	store := sessions.NewCookieStore([]byte(key))
+	gothic.Store = store
+
+	goth.UseProviders(
+		google.New(googleClientID, googleClientSecret, googleRedirectURL),
+	)
+}
 
 func HashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

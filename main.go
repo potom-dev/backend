@@ -7,7 +7,9 @@ import (
 	"os"
 
 	"github.com/potom-dev/backend/internal/api"
+	"github.com/potom-dev/backend/internal/auth"
 	"github.com/potom-dev/backend/internal/database"
+	"github.com/potom-dev/backend/internal/env"
 
 	// Import pq driver for its side effects only
 	_ "github.com/lib/pq"
@@ -15,11 +17,13 @@ import (
 )
 
 func main() {
-	InitEnv()
+	env.InitEnv()
 
-	port := GetEnv("PORT")
-	jwtSecret := GetEnv("JWT_SECRET")
-	dbURL := GetEnv("DB_URL")
+	auth.NewAuth()
+
+	port := env.GetEnv("PORT")
+	jwtSecret := env.GetEnv("JWT_SECRET")
+	dbURL := env.GetEnv("DB_URL")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {

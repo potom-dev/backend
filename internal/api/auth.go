@@ -2,10 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/markbates/goth/gothic"
 	"github.com/potom-dev/backend/internal/auth"
 	"github.com/potom-dev/backend/internal/database"
 )
@@ -164,4 +166,34 @@ func (cfg *Config) handlerRevokeRefresh(w http.ResponseWriter, r *http.Request) 
 	}
 
 	respondWithJSON(w, http.StatusNoContent, nil)
+}
+
+func (cfg *Config) handlerOauthCallback(w http.ResponseWriter, r *http.Request) {
+	// TODO: uncomment when moving to chi
+	// provider := chi.URLParam(r, "provider")
+	// r = r.WithContext(context.WithValue(r.Context(), "provider", provider))
+
+	user, err := gothic.CompleteUserAuth(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	log.Println(user)
+
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+func (cfg *Config) handlerOauthLogout(w http.ResponseWriter, r *http.Request) {
+	gothic.Logout(w, r)
+	w.Header().Set("Location", "/")
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+func (cfg *Config) handlerOauthAuth(w http.ResponseWriter, r *http.Request) {
+	if _, err := gothic.CompleteUserAuth(w, r); err == nil {
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	} else {
+		gothic.BeginAuthHandler(w, r)
+	}
 }

@@ -16,8 +16,8 @@ import (
 
 //	@securityDefinitions.basic	BasicAuth
 
-//	@externalDocs.description	OpenAPI
-//	@externalDocs.url			https://swagger.io/resources/open-api/
+// @externalDocs.description	OpenAPI
+// @externalDocs.url			https://swagger.io/resources/open-api/
 func NewRouter(cfg *Config) http.Handler {
 	mux := http.NewServeMux()
 
@@ -35,6 +35,10 @@ func NewRouter(cfg *Config) http.Handler {
 	mux.HandleFunc("POST /api/login", cfg.handlerLogin)
 	mux.HandleFunc("POST /api/refresh", cfg.handlerRefresh)
 	mux.HandleFunc("POST /api/revoke", cfg.handlerRevokeRefresh)
+
+	mux.HandleFunc("GET /api/auth/{provider}/callback", cfg.handlerOauthCallback)
+	mux.HandleFunc("GET /api/auth/{provider}/logout", cfg.handlerOauthLogout)
+	mux.HandleFunc("GET /api/auth/{provider}", cfg.handlerOauthAuth)
 
 	mux.HandleFunc("POST /api/groups", cfg.handlerCreateGroup)
 
